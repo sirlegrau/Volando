@@ -1,0 +1,176 @@
+<aura:component controller="VolandoController"  implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction"
+   access="global">
+    
+    <!-- airport record list based on query keyword -->
+   <aura:attribute name="airportOptions" type="List"/>
+    
+   <aura:attribute name="selectedOrigin" type="String" default=""/>
+   <aura:attribute name="tempOrigin" type="String" default=""/>
+   <aura:attribute name="showOrigin" type="Boolean" default="false"/>
+    
+   <aura:attribute name="selectedDestination" type="String" default =""/>
+   <aura:attribute name="tempDestination" type="String" default=""/>
+   <aura:attribute name="showDestination" type="Boolean" default="false"/>
+    
+    <!-- flight details screen controller -->
+   <aura:attribute name="flightDetails" type="Boolean" default="false"/>
+    <!-- Processing backend call spinner (avoids duplicate calls) -->
+   <aura:attribute name="isSpinner" type="Boolean" default="false"/>
+    
+   <aura:attribute name="distance" type="String"/>
+    
+   <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+   <aura:handler event="aura:waiting" action="{!c.handleShowSpinner}"/>
+   <aura:handler event="aura:doneWaiting" action="{!c.handleHideSpinner}"/>
+    
+    
+   <aura:if isTrue="{!v.flightDetails}">
+      <!-- Modal/Popup Box starts here-->
+      <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+         <div class="slds-modal__container">
+             
+            <!-- Flight record detail card -->
+            <header class="slds-modal__header">
+               <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Your Flight Details</h2>
+            </header>
+            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+               <br></br>
+               <div class="slds-grid slds-gutters slds-wrap">
+                  <div class="slds-col slds-size_6-of-12">
+                     <div class="slds-form-element slds-form-element_readonly">
+                        <span class="slds-form-element__label">Origin Airport</span>
+                        <div class="slds-form-element__control">
+                           <div class="slds-form-element__static">{!v.tempOrigin}</div>
+                        </div>
+                     </div>
+                     <div class="slds-form-element slds-form-element_readonly">
+                        <span class="slds-form-element__label">Destination Airport</span>
+                        <div class="slds-form-element__control">
+                           <div class="slds-form-element__static">{!v.tempDestination}</div>
+                        </div>
+                     </div>
+                     <div class="slds-form-element slds-form-element_readonly">
+                        <span class="slds-form-element__label">Distance</span>
+                        <div class="slds-form-element__control">
+                           <div class="slds-form-element__static">{!v.distance + ' Km'}</div>
+                        </div>
+                     </div>
+                     <br></br>
+                  </div>
+               </div>
+            </div>
+             
+            <!-- Component restart button -->
+            <footer class="slds-modal__footer">
+               <lightning:button variant="brand"
+                  label="Another!"
+                  title="Another!"
+                  onclick="{!c.returnButton}"/>
+            </footer>
+         </div>
+      </section>
+      <aura:set attribute="else">
+         <div>
+             <!-- Main picker component -->
+            <div class="slds-grid slds-gutters">
+               <div class="slds-col">
+                  <div>
+                      <!-- Origin search bar and dropdown -->
+                     <div onkeyup="{! c.searchOrigin }" >
+                        <lightning:input
+                           onfocus="{! c.originOnFocus}"
+                           onblur="{! c.originOnFocusOut}"
+                           aura:id="origin-search"
+                           name="origin-search"
+                           label="Origin"
+                           type="search"
+                           placeholder = "Search for Origin Airport by IATA code"
+                           />
+                     </div>
+                      <!-- ORIGIN AIRPORT QUERY LIST -->
+                     <aura:if isTrue="{!v.showOrigin}">
+                        <div style="overflow-y: scroll; height:200px;">
+                           <aura:iteration items="{!v.airportOptions}" var="a">
+                              <tr>
+                                 <div class= "airportCard" data-id="{!a.IATA__c}" data-value="{!a.Name + ' ' + a.Country__c + ' ' + a.IATA__c}"  onmousedown="{! c.onOriginSelect}">
+                                    <article class="slds-card" >
+                                       <div class="slds-card__header slds-grid">
+                                          <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                             <div class="slds-media__figure">
+                                                <lightning:icon iconName="custom:custom20">
+                                                </lightning:icon>
+                                             </div>
+                                             <div class="slds-media__body">
+                                                <h2 class="slds-card__header-title">
+                                                   <span>{!a.Name}</span>
+                                                </h2>
+                                             </div>
+                                          </header>
+                                       </div>
+                                       <div class="slds-card__body slds-card__body_inner">
+                                          <b>
+                                          {!a.Country__c}
+                                          </b> - {!a.IATA__c}
+                                       </div>
+                                    </article>
+                                 </div>
+                              </tr>
+                           </aura:iteration>
+                        </div>
+                     </aura:if>
+                  </div>
+               </div>
+               <div class="slds-col">
+                  <div>
+                      <!-- Destination search bar and origin -->
+                     <div onkeyup="{! c.searchDestination }" >
+                        <lightning:input
+                           onfocus="{! c.destinationOnFocus}"
+                           onblur="{! c.destinationOnFocusOut}"
+                           aura:id="destination-search"
+                           name="destination-search"
+                           label="Destination"
+                           type="search"
+                           placeholder = "Search for Destination Airport by IATA code"
+                           />
+                     </div>
+                          <!-- DESTINATION AIRPORT QUERY LIST -->
+                     <aura:if isTrue="{!v.showDestination}">
+                        <div style="overflow-y: scroll; height:200px;">
+                           <aura:iteration items="{!v.airportOptions}" var="a">
+                              <tr>
+                                 <div class= "airportCard" data-id="{!a.IATA__c}" data-value="{!a.Name + ' ' + a.Country__c + ' ' + a.IATA__c}"  onmousedown="{! c.onDestinationSelect}">
+                                    <article class="slds-card" >
+                                       <div class="slds-card__header slds-grid">
+                                          <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                             <div class="slds-media__figure">
+                                                <lightning:icon iconName="custom:custom20">
+                                                </lightning:icon>
+                                             </div>
+                                             <div class="slds-media__body">
+                                                <h2 class="slds-card__header-title">
+                                                   <span>{!a.Name}</span>
+                                                </h2>
+                                             </div>
+                                          </header>
+                                       </div>
+                                       <div class="slds-card__body slds-card__body_inner">
+                                          <b>
+                                          {!a.Country__c}
+                                          </b> - {!a.IATA__c}
+                                       </div>
+                                    </article>
+                                 </div>
+                              </tr>
+                           </aura:iteration>
+                        </div>
+                     </aura:if>
+                  </div>
+               </div>
+            </div>
+                
+            <lightning:button class="saveButton2" variant="brand" disabled="{!v.isSpinner}" label="{!v.isSpinner == true ? 'Booking...' : 'Book Now!'}" onclick="{!c.bookHandler}" />
+         </div>
+      </aura:set>
+   </aura:if>
+</aura:component>

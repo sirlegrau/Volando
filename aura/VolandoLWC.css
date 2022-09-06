@@ -1,0 +1,24 @@
+.THIS .airportCard :hover{
+    background-color: lightgray;
+    cursor: pointer;
+}
+
+.THIS .saveButton{
+     margin: auto;
+    height: 200px;
+    
+    float: none;
+  	width: 50%;
+  	
+  	padding: 10px;
+    align-content: end;  
+   	align-content: center;
+}
+.THIS .saveButton2{
+  position: fixed;
+  left: 50%;
+  bottom: 70px;
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+    
+}
